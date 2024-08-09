@@ -1,0 +1,23 @@
+
+This package is copyrighted by the people who wrote it.
+You may do with it whatever you want.
+
+BUT IF YOU ARE WORKING ON A COURSE PROJECT OF ANY FORMAT, PLEASE TURN THIS OFF
+	IMMEDIATELY! I, ALONG WITH MY GROUP MATES, WILL MOT BE RESPONSIBLE FOR YOUR
+	PLAGIARISM!!! YOU SHOULD WORK ON YOUR OWN, OR PLEASE REFER TO SVGAlib 1.4.3.
+
+Notes from Howie L.:
+    Some files are adaptaed from SVGAlib 1.4.3. (See intro for details.)
+    This version is used to support S22 MP3 of UIUC ECE 391.
+    We are using QEMU. So I am not guaranteeing my implement will work on your
+        device correctly or smoothly. (But I hope it does.)
+    Also, some variable, function, and/or macro defination may not be used or
+        executed at all. LOL.
+	-- When doing the vga part, I am inspired by Zikai Liu, Tingkai Liu, Qi Gao,
+		and Zhenyu Zong, who made AuroraOS two years ago. Many thanks to their work
+		for proving this path can lead us to success.
+	-- When designing the gui, I am working on my own.
+    If you have any question, please contact hanwenl4 <at> illinois <dot> edu
+	
+	Please enjoy!
+	05/07/2022 00:46:47

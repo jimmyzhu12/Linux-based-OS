@@ -1,0 +1,223 @@
+Checkpoint 1 bugs:
+
+    BUG1: tons of errors
+        date: 2022/3/18 
+        context: still try to compile
+        description: tons of errors and warnings occured
+        cause: compiler failed to distinguish whether a piece of code is in C or x86.
+        solution: add a line #define ASM 1
+
+    BUG2: no ./debug.sh
+        date: 2022/3/18
+        context: first time compiling
+        description: when make clean; make dep; sudo make, the compiler says there was no ./debug.sh, even though it was just there.
+        cause: didn't dos2unix
+        solution: type dos2unix ./debug.sh
+
+    BUG3: keeps looping
+        date: 2022/3/18
+        context: successfully compiled.
+        description: the screen keeps looping when running the kernels
+        cause: forgot to uncomment code that initialize idt. Assertion failure appeared, then infinite loop.
+        solution: make sure that the idt is initialized.
+
+    BUG4: test_debug cannot be opened
+        date: 2022/3/19
+        context: just changed folder name
+        description: suddenly test_debug cannot be opened
+        cause: after changing the folder name, the path that is configured in test_debug property becomes incorrect.
+        solution: reconfigurate the property of test_debug.
+
+    BUG5: cannot print a character even if the IDT successfully calls the handler
+        date: 2022/3/19
+        context: trying to test keyboard
+        description: fails to print a character using keyboard
+        cause: a group member accidentally wrote if (ascii_to_print < 0x32), which was originally intended to be if we see
+        a scan code that is larger than 0x32, we terminate the handler, because we only wrote things up to 'm' for cp1.
+        solution: change the ascii_to_print to fetched_code, and we finally see a character printed onto console.
+
+    BUG6: only one character can be printed
+        date: 2022/3/19
+        context: testing keyboard
+        description: after entering the testing part of keyboard, only one character can be printed
+        cause: one possible path of our code for keyboard didn't call send_eoi() to end the previous interrupt of keyboard
+        solution: make sure that send_eoi() is called in every possible execution paths in the interrupt handler of keyboard.
+
+
+
+Checkpoint 2 bugs:
+
+    BUG1: the caps also affects the non English character letters
+        date: 2022/3/27
+        context: testing keyboard
+        description: When I press caps, it also changes 1 to !, 2 to @, however, on our QEMU, it does not affect the numbers. 
+        cause: lack logic to control this part
+        soution: add a few if statements to distinguish between them
+    
+    BUG2: the cursor does not update when ctrl + l
+        date: 2022/3/27
+        context: displaying on screen
+        description: forgot to update cursor after I press ctrl + lack
+        cause: lack the one line update_cursor(0,0)
+        solution: just add it
+    
+    BUG3: the boot_block_t struct missing the reserved block[52] resulting in all the things move up 52 bytes, and everything messed up
+        date: 2022/3/28
+        context: file system struct definition
+        description: forget to allocate memory position for the reseverd bytes, and as a result, we can fetch the following structs correctly =
+        cause: see above
+        solution: add uint8_t  reserverd[52]; to the struct
+    
+    BUG4: mistaken logic in read data, making it return the wrong number of bytes readed(especially smaller for the extreme long name file)
+        date: 2022/3/28
+        context: file system read byte number
+        description: if the program tries to read the byte number that exceeds the scope of the file, the counter will record a wrong value(smaller than the expected value)
+        cause:  lack certain lock
+        solution: add an extra if statement to distinguish the condition
+
+
+
+Checkpoint 3 bugs:
+
+    BUG1: page fault in execute()
+        date: 2022/4/8
+        context: fixed compilation error for cp3 before combining SystemCall_linkage
+        description: page fault after IRET in the first execute("shell")
+        cause: the pushed eip was wrong
+        solution: EIP = *(current_pcb->eip). The pushed value for eip should be the one stored in program_addr + 24, not the address program_addr + 24 
+
+    BUG2: page fault in execute
+        date: 2022/4/8
+        context: fixed compilation error for cp3
+        description: in execute(), the pcb gotten using pid cannot be dereferenced
+        cause: get_pcb_ptr has missing brackets. Wrong calculation sequence
+        soution: in get_pcb_ptr, return (pcb_t*) (_KERNAL_END_ADDR_ - _TAST_SPCAE_*(pid+1));
+                      instead of return (pcb_t*) _KERNAL_END_ADDR_ - _TAST_SPCAE_*(pid+1);
+    
+    BUG3: no reaction after entering SystemCall_linkage
+        date: 2022/4/8
+        context: after execute(), the program should then execute SystemCall_linkage and choose the correct systemcall function. However no reaction then.
+        description: Goes to invalid input everytime
+        cause: wrongly judged the input value for SystemCall_linkage (the systemcall number).
+        solution: 	/* sanity check */
+                    cmpl	$10,	%eax
+                    jg		_mp3_sys_call_invalid
+                    cmpl	$0,		%eax
+                    jl		_mp3_sys_call_invalid
+
+    BUG4: no reaction in terminal when typing using keyboard
+        date: 2022/4/9
+        context: terminal succesfully booted
+        description: after booting the root terminal, no reaction when typing
+        cause: forgot sti();
+        solution: add a line sti() in open(), close(), read() and write()
+    
+    BUG5: page fault in open()
+        date: 2022/4/9
+        context: first time the code goes into open()
+        description: page fault when dereferencing cur_pcb_p
+        cause: shouldn't declare cur_dentry using dentry_t* cur_dentry without allocating memory. 
+        solution: Just use dentry_t cur_dentry to declare cur_dentry, change all cur_dentry into &cur_dentry, -> into .
+
+    BUG6:  fail to read after open
+        date: 2022/4/9
+        context: executing "ls"
+        description: reading from terminal instead of directory
+        cause: wrong return value 
+        solution: the return value in open() should be the file descriptor value, not simply 0 on success.
+
+    BUG7:  keyboard no reaction after halting any process
+        date: 2022/4/9
+        context: after executing pingpong, halt it
+        description: after inputting control + c, the terminal freezes
+        cause: send_eoi not reached
+        solution: send_eoi to the keyboard before calling halt.
+
+    BUG8:  page fault when halting root shell
+        date: 2022/4/9
+        context: trying to halt the root shell.
+        description: after booting, halt root shell twice and then page fault
+        cause: the halting logic was wrong. need to reset variables such as pid before calling execute("shell") in halt()
+        solution: close files and reset variables before execute("shell")
+
+
+
+Checkpoint 4 bugs:
+	
+    BUG1: there is always a read failed for cat after everything is successfully printed in function cat
+        date: 4/14/2022
+        context: trying to call function cat
+        description: for example for cat frame1.txt, there is a fish printed out. But there is a read failed statement immediately after
+        cause: return value of read_data function does not follow the description of the document
+        solution: change to return 0 when offset > length for read_data
+
+    BUG2: vidmap always fails
+        date: 4/17/2022
+        context: execute fish
+        description: vidmap always fails in user program, while it successes in kernel.
+        cause: both the user/supervisor bits of pde and pte are not set to 1 
+        solution: set them to 1
+
+
+
+Checkpoint 5 bugs:
+
+    BUG1: page fault
+    date: 4/19/2022
+    context: testing video memory setting
+    description: page fault after setting the video memory for running terminals
+    cause: forgot to set present bit of the video memory page for running terminals
+    solution: set present bits in page.c when initializing the page
+
+    BUG2: cannot write into the current terminal
+    date: 4/19/2022
+    context: modified putc() in lib.c to write on running temrinal instead of current terminal when executing
+    description: keyboard also writes on running temrinal instead of current terminal
+    cause: we don't have a function that can write on the current terminal anymore, because video_mem is maped when executing putc()
+    solution: add a new function putc_original() with resetting the video memory map at the beginning and the end. call this function in the places where it is required to write on the current terminal
+
+    BUG3: cursor updating
+    date: 4/19/2022
+    context: switch between terminals and run programs
+    description: the cursor is updates in a mess. For instance when the program in terminal2 ends, terminal1's cursor is updated.
+    cause: three terminals share screen_x and screen_y.
+    solution: not using common screen_x, screen_y, but store each terminal's cursor information in its own structure
+
+    BUG4: rebooting multiple times
+    date: 4/20/2022
+    context: first trial combining multi-terminals and scheduler
+    description: our system reboots multiple time and throw page fault after
+    cause: sti() too early before initializing all the objects. PIT gives very frequent interrupts
+    solution: cli() before ready to accept high-frequent PIT interrupts
+
+    BUG5: page fault
+    date: 4/20/2022
+    context: fixed rebooting issue. 
+    description: Page fault with an address near the user space 8MB
+    cause: wrongly initialize terminal numbers. dereference by -1.
+    solution: initialize cur_terminal and run_terminal to 0 when initializing the terminals
+
+    BUG6: each terminal's pids are not correct
+    date: 4/21/2022
+    context: fixed page faults
+    description: we turned the scheduler to schedule each 10 seconds. we executed some system calls and printed to terminals' pids. not correctly pushing and poping.
+    cause: in Systemcall.c execute() and halt() should push and pop run_terminal, not cur_terminal
+    solution: revise the push and pop process in execute() and halt() to push and pop run_terminal instead of cur_terminal
+
+    BUG7: scheduler not working well
+    date: 4/21/2022
+    context: fixed page faults and the scheduler starts to work
+    description: the scheduler works , but the scheduling is a mess.
+    cause: saved run_terminal after changing it. So each time the saved run_terminal was not correct
+    solution: save run_terminal as from_terminal at the beginning place of scheduler. save the old esp, ebp of from_terminal
+
+    BUG8: control + c not working well
+    date: 4/21/2022
+    context: scheduler works, but exit is still buggy
+    description: when control + c through keyboard, exit randomly
+    cause: the code in keyboard_handler in control + c section is turned to sleep when not running. thus judging if cur_terminal is run_terminal fails.
+    solution: solve the control + c issue in the scheduler, not keyboard handler.
+
+
+Appendix:
+git fetch --all && git reset --hard origin/master // synchronize branches
